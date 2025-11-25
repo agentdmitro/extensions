@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Browsing Analytics</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <div class="logo">
+                    <div class="logo-icon">📊</div>
+                    <div class="logo-text">
+                        <h1>Your Browsing Analytics</h1>
+                        <p>Insights into your browsing habits</p>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="date-filter">
+                    <label for="date-range">Time Range:</label>
+                    <select id="date-range">
+                        <option value="7">Last 7 days</option>
+                        <option value="14">Last 14 days</option>
+                        <option value="30" selected>Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                    </select>
+                </div>
+                <button class="btn-export" id="btn-export">
+                    <span class="icon">💾</span> Export
+                </button>
+                <button class="btn-refresh" id="btn-refresh">
+                    <span class="icon">🔄</span> Refresh
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Overview -->
+        <section class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-icon">📄</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="total-pages">--</div>
+                    <div class="stat-label">Total Pages Visited</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🌐</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="unique-domains">--</div>
+                    <div class="stat-label">Unique Domains</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏰</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="peak-hour">--</div>
+                    <div class="stat-label">Peak Activity Hour</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="peak-day">--</div>
+                    <div class="stat-label">Most Active Day</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+            <!-- Top Domains -->
+            <section class="chart-card chart-wide">
+                <div class="chart-header">
+                    <h2>🔝 Top Visited Domains</h2>
+                </div>
+                <div class="chart-body">
+                    <canvas id="chart-domains"></canvas>
+                </div>
+            </section>
+
+            <!-- Activity by Hour -->
+            <section class="chart-card">
+                <div class="chart-header">
+                    <h2>⏰ Activity by Hour</h2>
+                </div>
+                <div class="chart-body">
+                    <canvas id="chart-hourly"></canvas>
+                </div>
+            </section>
+
+            <!-- Activity by Day -->
+            <section class="chart-card">
+                <div class="chart-header">
+                    <h2>📅 Activity by Day of Week</h2>
+                </div>
+                <div class="chart-body">
+                    <canvas id="chart-daily"></canvas>
+                </div>
+            </section>
+
+            <!-- Time Distribution -->
+            <section class="chart-card">
+                <div class="chart-header">
+                    <h2>🎯 Browsing Categories</h2>
+                </div>
+                <div class="chart-body chart-body-pie">
+                    <canvas id="chart-categories"></canvas>
+                </div>
+                <div class="category-legend" id="category-legend"></div>
+            </section>
+
+            <!-- Top Pages Table -->
+            <section class="chart-card chart-wide">
+                <div class="chart-header">
+                    <h2>📋 Top Pages</h2>
+                    <div class="table-controls">
+                        <input type="text" id="page-search" placeholder="Search pages..." class="search-input">
+                    </div>
+                </div>
+                <div class="chart-body chart-body-table">
+                    <table class="pages-table" id="pages-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Page Title</th>
+                                <th>URL</th>
+                                <th>Visits</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pages-tbody">
+                            <tr>
+                                <td colspan="4" class="loading">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-pagination" id="pagination"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="loading-spinner"></div>
+            <p>Analyzing your browsing history...</p>
+        </div>
+    </div>
+
+    <script type="module" src="dashboard.js"></script>
+</body>
+
+</html>

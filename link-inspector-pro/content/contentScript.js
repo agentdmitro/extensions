@@ -36,6 +36,63 @@
 			console.log('Link Inspector: Using default settings');
 		}
 
+		function setupEventListeners() {
+			// Master toggle
+			elements.toggleEnabled.addEventListener('change', async (e) => {
+				settings.enabled = e.target.checked;
+				updateToggles();
+				await saveSettings();
+			});
+
+			// Feature toggles
+			elements.toggleUtm.addEventListener('change', async (e) => {
+				settings.showUtm = e.target.checked;
+				await saveSettings();
+			});
+
+			elements.toggleAnchors.addEventListener('change', async (e) => {
+				settings.showAnchors = e.target.checked;
+				await saveSettings();
+			});
+
+			elements.togglePopups.addEventListener('change', async (e) => {
+				settings.showPopups = e.target.checked;
+				await saveSettings();
+			});
+
+			// Action buttons
+			elements.btnCopyUtms.addEventListener('click', copyUtmParameters);
+			elements.btnExport.addEventListener('click', exportData);
+			elements.btnRefresh.addEventListener('click', loadPageData);
+
+			// Collapsible groups
+			document.querySelectorAll('.result-group h3').forEach((header) => {
+				header.addEventListener('click', () => {
+					const list = header.nextElementSibling;
+					list.style.display = list.style.display === 'none' ? 'block' : 'none';
+				});
+			});
+
+			// Search functionality
+			elements.searchInput?.addEventListener('input', debounce(handleSearch, 150));
+
+			// Keyboard navigation
+			document.addEventListener('keydown', handleKeyDown);
+
+			// Help link
+			elements.linkHelp?.addEventListener('click', (e) => {
+				e.preventDefault();
+				elements.shortcutsHelp?.classList.toggle('hidden');
+			});
+
+			// Close shortcuts on outside click
+			document.addEventListener('click', (e) => {
+				if (!e.target.closest('.shortcuts-help') && !e.target.closest('#link-help')) {
+					elements.shortcutsHelp?.classList.add('hidden');
+				}
+			});
+		}
+
 		// Set up event listeners
 		setupEventListeners();
 

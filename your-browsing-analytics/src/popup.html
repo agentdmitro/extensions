@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browsing Analytics</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+    <div class="popup-container">
+        <!-- Header -->
+        <header class="popup-header">
+            <div class="logo">
+                <div class="logo-icon">📊</div>
+                <h1>Browsing Analytics</h1>
+            </div>
+        </header>
+
+        <!-- Today's Summary -->
+        <section class="summary-section">
+            <h2>Today's Activity</h2>
+            <div class="summary-card">
+                <div class="stat-main">
+                    <span class="stat-value" id="today-visits">--</span>
+                    <span class="stat-label">page visits</span>
+                </div>
+                <div class="sparkline-container">
+                    <svg id="activity-sparkline" viewBox="0 0 100 30" preserveAspectRatio="none">
+                        <path class="sparkline-path" d="" fill="none" stroke="url(#sparkGradient)" stroke-width="2" />
+                        <defs>
+                            <linearGradient id="sparkGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#6366f1" />
+                                <stop offset="100%" style="stop-color:#a855f7" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top Sites -->
+        <section class="top-sites-section">
+            <h2>Top Sites Today</h2>
+            <ul class="top-sites-list" id="top-sites">
+                <li class="loading-placeholder">Loading...</li>
+            </ul>
+        </section>
+
+        <!-- Quick Actions -->
+        <section class="actions-section">
+            <button class="action-btn primary" id="btn-dashboard">
+                <span class="icon">📈</span>
+                Full Dashboard
+            </button>
+            <button class="action-btn secondary" id="btn-refresh">
+                <span class="icon">🔄</span>
+                Refresh
+            </button>
+        </section>
+
+        <!-- Footer -->
+        <footer class="popup-footer">
+            <span>Last 24 hours • Click for full analytics</span>
+        </footer>
+    </div>
+
+    <script type="module" src="popup.js"></script>
+</body>
+
+</html>
