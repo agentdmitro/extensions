@@ -4,6 +4,7 @@
 	"version": "1.0.0",
 	"description": "Inspect UTM parameters, anchor sections, and popup triggers on any link",
 	"permissions": ["activeTab", "storage", "scripting"],
+	"host_permissions": ["<all_urls>"],
 	"action": {
 		"default_popup": "popup/popup.html",
 		"default_icon": {

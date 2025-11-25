@@ -212,3 +212,189 @@
 .link-inspector-disabled .link-inspector-highlight {
 	display: none !important;
 }
+
+.lip-tooltip {
+	animation: lip-tooltip-in 0.15s ease;
+}
+
+@keyframes lip-tooltip-in {
+	from {
+		opacity: 0;
+		transform: translateY(5px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.lip-tooltip-header {
+	font-weight: 600;
+	font-size: 13px;
+	margin-bottom: 8px;
+	color: #a78bfa;
+}
+
+.lip-tooltip-section {
+	margin: 8px 0;
+	padding: 8px;
+	background: rgba(139, 92, 246, 0.1);
+	border-radius: 4px;
+}
+
+.lip-tooltip-section-title {
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: #a5a5c2;
+	margin-bottom: 4px;
+}
+
+.lip-tooltip-param {
+	display: flex;
+	justify-content: space-between;
+	font-size: 11px;
+	margin: 2px 0;
+}
+
+.lip-tooltip-param-key {
+	color: #ec4899;
+	font-family: 'SF Mono', Monaco, monospace;
+}
+
+.lip-tooltip-param-value {
+	color: #6ee7b7;
+	font-family: 'SF Mono', Monaco, monospace;
+	max-width: 150px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.lip-tooltip-badge {
+	display: inline-block;
+	padding: 2px 6px;
+	font-size: 9px;
+	font-weight: 600;
+	border-radius: 3px;
+	margin-right: 4px;
+}
+
+.lip-tooltip-badge-utm {
+	background: rgba(139, 92, 246, 0.2);
+	color: #c4b5fd;
+}
+
+.lip-tooltip-badge-anchor {
+	background: rgba(16, 185, 129, 0.2);
+	color: #6ee7b7;
+}
+
+.lip-tooltip-badge-popup {
+	background: rgba(236, 72, 153, 0.2);
+	color: #f9a8d4;
+}
+
+.lip-tooltip-badge-affiliate {
+	background: rgba(16, 185, 129, 0.2);
+	color: #6ee7b7;
+}
+
+.link-inspector-highlight {
+	outline: 2px solid #8b5cf6 !important;
+	outline-offset: 2px !important;
+	animation: lip-pulse 1.5s ease infinite;
+}
+
+@keyframes lip-pulse {
+	0%, 100% {
+		outline-color: #8b5cf6;
+	}
+	50% {
+		outline-color: #ec4899;
+	}
+}
+
+/* Anchor navigation highlight */
+.lip-anchor-target-highlight {
+	position: relative;
+	animation: lip-anchor-highlight 3s ease-out forwards !important;
+}
+
+.lip-anchor-target-highlight::before {
+	content: '';
+	position: absolute;
+	inset: -8px;
+	background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.1) 100%);
+	border: 2px solid rgba(139, 92, 246, 0.5);
+	border-radius: 8px;
+	pointer-events: none;
+	animation: lip-anchor-border-pulse 3s ease-out forwards;
+	z-index: 9999;
+}
+
+.lip-anchor-target-highlight::after {
+	content: '📍';
+	position: absolute;
+	top: -12px;
+	left: -12px;
+	font-size: 20px;
+	animation: lip-anchor-icon-fade 3s ease-out forwards;
+	z-index: 10000;
+	filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+@keyframes lip-anchor-highlight {
+	0% {
+		outline: 3px solid rgba(139, 92, 246, 0.8);
+		outline-offset: 4px;
+		box-shadow: 0 0 30px rgba(139, 92, 246, 0.4);
+	}
+	70% {
+		outline: 3px solid rgba(139, 92, 246, 0.6);
+		outline-offset: 4px;
+		box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+	}
+	100% {
+		outline: 3px solid transparent;
+		outline-offset: 4px;
+		box-shadow: 0 0 0 transparent;
+	}
+}
+
+@keyframes lip-anchor-border-pulse {
+	0% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.8;
+		transform: scale(1.02);
+	}
+	70% {
+		opacity: 0.5;
+	}
+	100% {
+		opacity: 0;
+		transform: scale(1.05);
+	}
+}
+
+@keyframes lip-anchor-icon-fade {
+	0% {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
+	20% {
+		opacity: 1;
+		transform: scale(1.2) translateY(-5px);
+	}
+	70% {
+		opacity: 0.8;
+		transform: scale(1) translateY(0);
+	}
+	100% {
+		opacity: 0;
+		transform: scale(0.8) translateY(5px);
+	}
+}

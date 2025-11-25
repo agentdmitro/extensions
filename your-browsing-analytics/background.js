@@ -565,6 +565,7 @@ async function fetchHistoryData(days = 30, startTimestamp = null, endTimestamp =
 			todayVisits,
 			totalVisits,
 			totalItems: historyItems.length,
+			uniqueDomains: Object.keys(domainStats).length, // Add actual unique domains count
 			fetchedAt: now,
 			dateRange: {
 				start: startTime,

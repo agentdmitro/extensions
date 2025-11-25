@@ -298,7 +298,7 @@ function updateStats() {
 	const totalVisits = analyticsData.totalVisits || analyticsData.topDomains?.reduce((sum, d) => sum + d.visits, 0) || 0;
 
 	animateValue(elements.totalPages, totalVisits);
-	animateValue(elements.uniqueDomains, analyticsData.topDomains?.length || 0);
+	animateValue(elements.uniqueDomains, analyticsData.uniqueDomains || analyticsData.topDomains?.length || 0);
 
 	if (analyticsData.hourlyActivity) {
 		const maxActivity = Math.max(...analyticsData.hourlyActivity);
