@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Inspector Pro</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+    <div class="popup-container">
+        <!-- Header -->
+        <header class="popup-header">
+            <div class="logo">
+                <svg viewBox="0 0 128 128" width="32" height="32">
+                    <defs>
+                        <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#6366f1" />
+                            <stop offset="100%" style="stop-color:#8b5cf6" />
+                        </linearGradient>
+                        <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#a855f7" />
+                            <stop offset="100%" style="stop-color:#ec4899" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="52" cy="52" r="28" fill="none" stroke="url(#g1)" stroke-width="6" />
+                    <line x1="72" y1="72" x2="95" y2="95" stroke="url(#g1)" stroke-width="8" stroke-linecap="round" />
+                    <path d="M42 48 Q38 48 38 52 Q38 56 42 56 L48 56" fill="none" stroke="url(#g2)" stroke-width="4" stroke-linecap="round" />
+                    <path d="M62 48 Q66 48 66 52 Q66 56 62 56 L56 56" fill="none" stroke="url(#g2)" stroke-width="4" stroke-linecap="round" />
+                    <line x1="48" y1="52" x2="56" y2="52" stroke="url(#g2)" stroke-width="4" stroke-linecap="round" />
+                </svg>
+                <h1>Link Inspector Pro</h1>
+            </div>
+            <div class="master-toggle">
+                <label class="toggle">
+                    <input type="checkbox" id="toggle-enabled" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </header>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-item utm">
+                <div class="stat-number" id="stat-utm">-</div>
+                <div class="stat-label">UTM</div>
+            </div>
+            <div class="stat-item anchor">
+                <div class="stat-number" id="stat-anchors">-</div>
+                <div class="stat-label">Anchors</div>
+            </div>
+            <div class="stat-item popup">
+                <div class="stat-number" id="stat-popups">-</div>
+                <div class="stat-label">Popups</div>
+            </div>
+            <div class="stat-item external">
+                <div class="stat-number" id="stat-external">-</div>
+                <div class="stat-label">External</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <!-- Add search input before buttons -->
+            <div class="search-wrapper">
+                <input type="text" id="search-input" placeholder="Filter links..." class="search-input">
+                <span class="search-icon">🔍</span>
+            </div>
+        </div>
+        <div class="quick-actions">
+            <button class="action-btn" id="btn-copy-utms" title="Copy all UTM parameters">
+                <span class="icon">📋</span>
+                Copy UTMs
+            </button>
+            <button class="action-btn" id="btn-export" title="Export analysis as JSON">
+                <span class="icon">💾</span>
+                Export
+            </button>
+            <button class="action-btn" id="btn-refresh" title="Refresh analysis">
+                <span class="icon">🔄</span>
+                Refresh
+            </button>
+        </div>
+
+        <!-- Feature Toggles -->
+        <section class="settings-section">
+            <h2>Features</h2>
+            <div class="toggle-list">
+                <label class="toggle-item">
+                    <span class="toggle-label">
+                        <span class="toggle-icon">📊</span>
+                        UTM Parameters
+                    </span>
+                    <label class="toggle small">
+                        <input type="checkbox" id="toggle-utm" checked>
+                        <span class="slider"></span>
+                    </label>
+                </label>
+                <label class="toggle-item">
+                    <span class="toggle-label">
+                        <span class="toggle-icon">⚓</span>
+                        Anchor Sections
+                    </span>
+                    <label class="toggle small">
+                        <input type="checkbox" id="toggle-anchors" checked>
+                        <span class="slider"></span>
+                    </label>
+                </label>
+                <label class="toggle-item">
+                    <span class="toggle-label">
+                        <span class="toggle-icon">🪟</span>
+                        Popup Detection
+                    </span>
+                    <label class="toggle small">
+                        <input type="checkbox" id="toggle-popups" checked>
+                        <span class="slider"></span>
+                    </label>
+                </label>
+            </div>
+        </section>
+
+        <!-- Page Analysis -->
+        <section class="analysis-section">
+            <h2>Page Analysis</h2>
+
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <span>Analyzing page...</span>
+            </div>
+
+            <div id="error" class="error hidden">
+                <span>⚠️ Unable to analyze this page</span>
+            </div>
+
+            <div id="results" class="results hidden">
+                <!-- UTM Links -->
+                <div class="result-group" id="utm-group">
+                    <h3>
+                        <span class="result-icon">📊</span>
+                        UTM Links
+                        <span class="count" id="utm-count">0</span>
+                    </h3>
+                    <ul class="result-list" id="utm-list"></ul>
+                </div>
+
+                <!-- Anchors -->
+                <div class="result-group" id="anchor-group">
+                    <h3>
+                        <span class="result-icon">⚓</span>
+                        Anchor Links
+                        <span class="count" id="anchor-count">0</span>
+                    </h3>
+                    <ul class="result-list" id="anchor-list"></ul>
+                </div>
+
+                <!-- Popups -->
+                <div class="result-group" id="popup-group">
+                    <h3>
+                        <span class="result-icon">🪟</span>
+                        Popup Triggers
+                        <span class="count" id="popup-count">0</span>
+                    </h3>
+                    <ul class="result-list" id="popup-list"></ul>
+                </div>
+
+                <!-- External Links -->
+                <div class="result-group" id="external-group">
+                    <h3>
+                        <span class="result-icon">🔗</span>
+                        External Links
+                        <span class="count" id="external-count">0</span>
+                    </h3>
+                    <ul class="result-list" id="external-list"></ul>
+                </div>
+
+                <div id="no-results" class="no-results hidden">
+                    <div class="no-results-icon">🔍</div>
+                    <div class="no-results-text">No special links detected on this page</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="popup-footer">
+            <span>💡 Hover over links to inspect • <a href="#" id="link-help">Help</a></span>
+        </footer>
+
+        <!-- Add before closing popup-container div -->
+        <!-- Keyboard Shortcuts Help -->
+        <div id="shortcuts-help" class="shortcuts-help hidden">
+            <h3>Keyboard Shortcuts</h3>
+            <ul>
+                <li><kbd>Alt</kbd>+<kbd>L</kbd> Toggle overlay</li>
+                <li><kbd>Tab</kbd> Navigate groups</li>
+                <li><kbd>Esc</kbd> Close popup</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

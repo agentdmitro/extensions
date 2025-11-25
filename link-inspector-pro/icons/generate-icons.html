@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Generate Icons</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .icon-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        canvas {
+            background: transparent;
+            border: 1px solid #333;
+        }
+
+        button {
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+
+        a {
+            color: #a78bfa;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Icon Generator</h1>
+    <p>Right-click each canvas and "Save image as..." with the correct filename.</p>
+
+    <div class="icon-row">
+        <div>
+            <h3>icon16.png</h3>
+            <canvas id="c16" width="16" height="16"></canvas>
+        </div>
+        <div>
+            <h3>icon48.png</h3>
+            <canvas id="c48" width="48" height="48"></canvas>
+        </div>
+        <div>
+            <h3>icon128.png</h3>
+            <canvas id="c128" width="128" height="128"></canvas>
+        </div>
+    </div>
+
+    <script>
+        function drawIcon(ctx, size) {
+            const scale = size / 128;
+            ctx.scale(scale, scale);
+
+            // Create gradients
+            const grad1 = ctx.createLinearGradient(0, 0, 128, 128);
+            grad1.addColorStop(0, '#6366f1');
+            grad1.addColorStop(1, '#8b5cf6');
+
+            const grad2 = ctx.createLinearGradient(0, 0, 128, 128);
+            grad2.addColorStop(0, '#a855f7');
+            grad2.addColorStop(1, '#ec4899');
+
+            // Magnifying glass circle
+            ctx.beginPath();
+            ctx.arc(52, 52, 28, 0, Math.PI * 2);
+            ctx.strokeStyle = grad1;
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            // Magnifying glass handle
+            ctx.beginPath();
+            ctx.moveTo(72, 72);
+            ctx.lineTo(95, 95);
+            ctx.strokeStyle = grad1;
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            // Link chain - left part
+            ctx.beginPath();
+            ctx.moveTo(48, 56);
+            ctx.lineTo(42, 56);
+            ctx.quadraticCurveTo(38, 56, 38, 52);
+            ctx.quadraticCurveTo(38, 48, 42, 48);
+            ctx.strokeStyle = grad2;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            // Link chain - right part
+            ctx.beginPath();
+            ctx.moveTo(56, 56);
+            ctx.lineTo(62, 56);
+            ctx.quadraticCurveTo(66, 56, 66, 52);
+            ctx.quadraticCurveTo(66, 48, 62, 48);
+            ctx.strokeStyle = grad2;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            // Link chain - middle connector
+            ctx.beginPath();
+            ctx.moveTo(48, 52);
+            ctx.lineTo(56, 52);
+            ctx.strokeStyle = grad2;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            // UTM badge
+            ctx.beginPath();
+            ctx.roundRect(75, 20, 35, 18, 4);
+            ctx.fillStyle = grad2;
+            ctx.fill();
+
+            // UTM text
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('UTM', 92.5, 29);
+        }
+
+        // Draw all sizes
+        ['16', '48', '128'].forEach(size => {
+            const canvas = document.getElementById('c' + size);
+            const ctx = canvas.getContext('2d');
+            drawIcon(ctx, parseInt(size));
+        });
+    </script>
+</body>
+
+</html>
