@@ -145,7 +145,8 @@
 		chrome.runtime.onMessage.addListener(handleMessage);
 
 		// Load settings async (don't block initialization)
-		chrome.runtime.sendMessage({ type: 'GET_SETTINGS' })
+		chrome.runtime
+			.sendMessage({ type: 'GET_SETTINGS' })
 			.then((response) => {
 				if (response) {
 					settings = response;
@@ -320,7 +321,7 @@
 
 			// Check if it's a same-page anchor
 			let targetHash = null;
-			
+
 			if (href.startsWith('#')) {
 				targetHash = href;
 			} else {
@@ -348,7 +349,7 @@
 
 		const targetId = hash.substring(1);
 		let targetElement = document.getElementById(targetId);
-		
+
 		// Try name attribute if ID not found
 		if (!targetElement) {
 			targetElement = document.querySelector(`[name="${targetId}"]`);
@@ -382,7 +383,7 @@
 			currentHighlightedSection = null;
 		}
 		// Also clean up any orphaned highlights
-		document.querySelectorAll('.lip-anchor-target-highlight').forEach(el => {
+		document.querySelectorAll('.lip-anchor-target-highlight').forEach((el) => {
 			el.classList.remove('lip-anchor-target-highlight');
 		});
 	}
@@ -414,7 +415,7 @@
 			return element.id
 				.replace(/[-_]/g, ' ')
 				.replace(/([a-z])([A-Z])/g, '$1 $2')
-				.replace(/\b\w/g, c => c.toUpperCase())
+				.replace(/\b\w/g, (c) => c.toUpperCase())
 				.substring(0, 40);
 		}
 

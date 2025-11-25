@@ -307,7 +307,8 @@
 }
 
 @keyframes lip-pulse {
-	0%, 100% {
+	0%,
+	100% {
 		outline-color: #8b5cf6;
 	}
 	50% {
@@ -341,7 +342,7 @@
 	font-size: 20px;
 	animation: lip-anchor-icon-fade 3s ease-out forwards;
 	z-index: 10000;
-	filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+	filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 @keyframes lip-anchor-highlight {

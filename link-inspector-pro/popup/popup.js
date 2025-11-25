@@ -203,11 +203,13 @@
 			}
 
 			// Check if we can inject into this page
-			if (tab.url?.startsWith('chrome://') || 
-			    tab.url?.startsWith('chrome-extension://') || 
-			    tab.url?.startsWith('edge://') ||
-			    tab.url?.startsWith('about:') ||
-			    tab.url?.startsWith('moz-extension://')) {
+			if (
+				tab.url?.startsWith('chrome://') ||
+				tab.url?.startsWith('chrome-extension://') ||
+				tab.url?.startsWith('edge://') ||
+				tab.url?.startsWith('about:') ||
+				tab.url?.startsWith('moz-extension://')
+			) {
 				console.log('Cannot analyze browser internal pages');
 				showError();
 				return;
@@ -219,17 +221,17 @@
 				response = await chrome.tabs.sendMessage(tab.id, { type: 'COLLECT_PAGE_DATA' });
 			} catch (e) {
 				console.log('Content script not ready, trying to inject...', e);
-				
+
 				// Try to inject content scripts manually
 				try {
 					await chrome.scripting.executeScript({
 						target: { tabId: tab.id },
-						files: ['modules/utmParser.js', 'modules/anchorInspector.js', 'modules/popupDetector.js', 'content/contentScript.js']
+						files: ['modules/utmParser.js', 'modules/anchorInspector.js', 'modules/popupDetector.js', 'content/contentScript.js'],
 					});
-					
+
 					// Wait a bit for scripts to initialize
-					await new Promise(resolve => setTimeout(resolve, 100));
-					
+					await new Promise((resolve) => setTimeout(resolve, 100));
+
 					// Try again
 					response = await chrome.tabs.sendMessage(tab.id, { type: 'COLLECT_PAGE_DATA' });
 				} catch (injectError) {
