@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Download Icons - Browsing Analytics</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 40px;
+            background: #f8fafc;
+            color: #1e293b;
+            text-align: center;
+        }
+
+        .icons {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .icon-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        canvas {
+            display: block;
+            margin: 10px auto;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+        }
+
+        a:hover {
+            opacity: 0.9;
+        }
+
+        .instructions {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 500px;
+            margin: 20px auto;
+            text-align: left;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        code {
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>📊 Browsing Analytics - Icon Generator</h1>
+    <div class="icons" id="icons"></div>
+    <div class="instructions">
+        <h3>📋 Instructions:</h3>
+        <ol>
+            <li>Click each <strong>"Download"</strong> button</li>
+            <li>Save files to: <code>public/</code> folder</li>
+            <li>Ensure names are: <code>icon-16.png</code>, <code>icon-48.png</code>, <code>icon-128.png</code></li>
+            <li>Reload the extension in Chrome</li>
+        </ol>
+    </div>
+    <script>
+        function createIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            const scale = size / 128;
+            ctx.scale(scale, scale);
+
+            // Gradient background circle
+            const bgGrad = ctx.createLinearGradient(0, 0, 128, 128);
+            bgGrad.addColorStop(0, '#6366f1');
+            bgGrad.addColorStop(1, '#a855f7');
+
+            ctx.beginPath();
+            ctx.arc(64, 64, 60, 0, Math.PI * 2);
+            ctx.fillStyle = bgGrad;
+            ctx.fill();
+
+            // Bar chart bars
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+
+            // Bar 1 (left)
+            ctx.beginPath();
+            ctx.roundRect(28, 70, 18, 35, 4);
+            ctx.fill();
+
+            // Bar 2 (middle - tallest)
+            ctx.beginPath();
+            ctx.roundRect(55, 40, 18, 65, 4);
+            ctx.fill();
+
+            // Bar 3 (right)
+            ctx.beginPath();
+            ctx.roundRect(82, 55, 18, 50, 4);
+            ctx.fill();
+
+            // Trend line
+            ctx.beginPath();
+            ctx.moveTo(25, 75);
+            ctx.lineTo(50, 55);
+            ctx.lineTo(75, 35);
+            ctx.lineTo(100, 45);
+            ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            return canvas;
+        }
+
+        [16, 48, 128].forEach(size => {
+            const container = document.createElement('div');
+            container.className = 'icon-box';
+
+            const title = document.createElement('h3');
+            title.textContent = `${size}×${size}`;
+            container.appendChild(title);
+
+            const canvas = createIcon(size);
+            container.appendChild(canvas);
+
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = `icon-${size}.png`;
+            link.textContent = `Download icon-${size}.png`;
+            container.appendChild(link);
+
+            document.getElementById('icons').appendChild(container);
+        });
+    </script>
+</body>
+
+</html>

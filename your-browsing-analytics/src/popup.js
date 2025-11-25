@@ -3,8 +3,35 @@
  * Displays quick stats and navigation to full dashboard
  */
 
-import { getTodayStats } from './history.js';
-import { formatNumber, generateSparklinePath } from './utils.js';
+// Utility functions
+function formatNumber(num) {
+	if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+	if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+	return num.toString();
+}
+
+function generateSparklinePath(data, width, height) {
+	if (!data || data.length === 0) return '';
+	const max = Math.max(...data, 1);
+	const points = data.map((val, i) => {
+		const x = (i / (data.length - 1)) * width;
+		const y = height - (val / max) * height;
+		return `${x},${y}`;
+	});
+	return 'M' + points.join(' L');
+}
+
+async function getTodayStats() {
+	return new Promise((resolve, reject) => {
+		chrome.runtime.sendMessage({ type: 'GET_TODAY_STATS' }, (response) => {
+			if (chrome.runtime.lastError) {
+				reject(chrome.runtime.lastError);
+				return;
+			}
+			resolve(response);
+		});
+	});
+}
 
 // DOM Elements
 const elements = {
@@ -15,37 +42,30 @@ const elements = {
 	btnRefresh: document.getElementById('btn-refresh'),
 };
 
-/**
- * Initialize popup
- */
 async function init() {
 	setupEventListeners();
 	await loadStats();
 }
 
-/**
- * Setup event listeners
- */
 function setupEventListeners() {
-	// Open dashboard
-	elements.btnDashboard.addEventListener('click', () => {
+	elements.btnDashboard?.addEventListener('click', () => {
 		chrome.tabs.create({ url: chrome.runtime.getURL('src/dashboard.html') });
 		window.close();
 	});
 
-	// Refresh data
-	elements.btnRefresh.addEventListener('click', async () => {
-		elements.btnRefresh.disabled = true;
-		elements.btnRefresh.textContent = '⏳ Loading...';
+	elements.btnRefresh?.addEventListener('click', async () => {
+		if (elements.btnRefresh) {
+			elements.btnRefresh.disabled = true;
+			elements.btnRefresh.textContent = '⏳ Loading...';
+		}
 		await loadStats();
-		elements.btnRefresh.disabled = false;
-		elements.btnRefresh.innerHTML = '<span class="icon">🔄</span> Refresh';
+		if (elements.btnRefresh) {
+			elements.btnRefresh.disabled = false;
+			elements.btnRefresh.innerHTML = '<span class="icon">🔄</span> Refresh';
+		}
 	});
 }
 
-/**
- * Load and display stats
- */
 async function loadStats() {
 	try {
 		const stats = await getTodayStats();
@@ -55,16 +75,20 @@ async function loadStats() {
 			return;
 		}
 
-		// Update visit count
-		elements.todayVisits.textContent = formatNumber(stats.todayVisits || 0);
-
-		// Update sparkline
-		if (stats.hourlyActivity && stats.hourlyActivity.length > 0) {
-			const path = generateSparklinePath(stats.hourlyActivity, 100, 30);
-			elements.sparkline.setAttribute('d', path);
+		// Use todayVisits which now comes from actual visit counting
+		if (elements.todayVisits) {
+			elements.todayVisits.textContent = formatNumber(stats.todayVisits || 0);
 		}
 
-		// Update top sites
+		if (elements.sparkline && stats.hourlyActivity?.length > 0) {
+			// Only show sparkline if there's actual activity
+			const hasActivity = stats.hourlyActivity.some((v) => v > 0);
+			if (hasActivity) {
+				const path = generateSparklinePath(stats.hourlyActivity, 100, 30);
+				elements.sparkline.setAttribute('d', path);
+			}
+		}
+
 		renderTopSites(stats.topDomains || []);
 	} catch (error) {
 		console.error('Failed to load stats:', error);
@@ -72,18 +96,16 @@ async function loadStats() {
 	}
 }
 
-/**
- * Render top sites list
- * @param {Array} sites - Top sites array
- */
 function renderTopSites(sites) {
+	if (!elements.topSites) return;
+
 	if (!sites || sites.length === 0) {
 		elements.topSites.innerHTML = `
-      <li class="empty-state">
-        <div class="empty-state-icon">🔍</div>
-        <div class="empty-state-text">No browsing data yet</div>
-      </li>
-    `;
+			<li class="empty-state">
+				<div class="empty-state-icon">🔍</div>
+				<div class="empty-state-text">No browsing data yet</div>
+			</li>
+		`;
 		return;
 	}
 
@@ -91,23 +113,18 @@ function renderTopSites(sites) {
 		.slice(0, 3)
 		.map(
 			(site) => `
-    <li>
-      <div class="site-info">
-        <div class="site-favicon">${getFaviconEmoji(site.domain)}</div>
-        <span class="site-domain">${escapeHtml(site.domain)}</span>
-      </div>
-      <span class="site-visits">${formatNumber(site.visits)}</span>
-    </li>
-  `
+		<li>
+			<div class="site-info">
+				<div class="site-favicon">${getFaviconEmoji(site.domain)}</div>
+				<span class="site-domain">${escapeHtml(site.domain)}</span>
+			</div>
+			<span class="site-visits">${formatNumber(site.visits)}</span>
+		</li>
+	`
 		)
 		.join('');
 }
 
-/**
- * Get favicon emoji based on domain
- * @param {string} domain - Domain name
- * @returns {string} Emoji
- */
 function getFaviconEmoji(domain) {
 	const emojiMap = {
 		google: '🔍',
@@ -128,31 +145,24 @@ function getFaviconEmoji(domain) {
 		notion: '📝',
 		figma: '🎨',
 	};
-
 	for (const [key, emoji] of Object.entries(emojiMap)) {
 		if (domain.includes(key)) return emoji;
 	}
 	return '🌐';
 }
 
-/**
- * Show error state
- */
 function showError() {
-	elements.todayVisits.textContent = '--';
-	elements.topSites.innerHTML = `
-    <li class="empty-state">
-      <div class="empty-state-icon">⚠️</div>
-      <div class="empty-state-text">Unable to load data</div>
-    </li>
-  `;
+	if (elements.todayVisits) elements.todayVisits.textContent = '--';
+	if (elements.topSites) {
+		elements.topSites.innerHTML = `
+			<li class="empty-state">
+				<div class="empty-state-icon">⚠️</div>
+				<div class="empty-state-text">Unable to load data</div>
+			</li>
+		`;
+	}
 }
 
-/**
- * Escape HTML entities
- * @param {string} text - Text to escape
- * @returns {string} Escaped text
- */
 function escapeHtml(text) {
 	const div = document.createElement('div');
 	div.textContent = text;
@@ -160,4 +170,4 @@ function escapeHtml(text) {
 }
 
 // Initialize
-init();
+document.addEventListener('DOMContentLoaded', init);

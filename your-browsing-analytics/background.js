@@ -9,6 +9,7 @@ const CACHE_DURATION = 5 * 60 * 1000;
 // Cached data store
 let cachedData = null;
 let cacheTimestamp = 0;
+let cachedDays = 0;
 
 /**
  * Domain categorization rules
@@ -119,14 +120,25 @@ function extractDomain(url) {
 /**
  * Fetch and process history data
  * @param {number} days - Number of days to fetch
+ * @param {number} startTimestamp - Optional custom start timestamp
+ * @param {number} endTimestamp - Optional custom end timestamp
  * @returns {Promise<Object>} Processed analytics data
  */
-async function fetchHistoryData(days = 30) {
+async function fetchHistoryData(days = 30, startTimestamp = null, endTimestamp = null) {
 	const now = Date.now();
-	const startTime = now - days * 24 * 60 * 60 * 1000;
 
-	// Check cache validity
-	if (cachedData && now - cacheTimestamp < CACHE_DURATION) {
+	// Calculate time range
+	let startTime, endTime;
+	if (startTimestamp && endTimestamp) {
+		startTime = startTimestamp;
+		endTime = endTimestamp;
+	} else {
+		startTime = now - days * 24 * 60 * 60 * 1000;
+		endTime = now;
+	}
+
+	// Check cache validity (only for non-custom ranges)
+	if (!startTimestamp && cachedData && cachedDays === days && now - cacheTimestamp < CACHE_DURATION) {
 		return cachedData;
 	}
 
@@ -134,32 +146,48 @@ async function fetchHistoryData(days = 30) {
 		const historyItems = await chrome.history.search({
 			text: '',
 			startTime: startTime,
+			endTime: endTime,
 			maxResults: 10000,
 		});
 
-		// Process data
+		// Get detailed visit information for more accurate counting
 		const domainStats = {};
 		const hourlyActivity = new Array(24).fill(0);
 		const dailyActivity = new Array(7).fill(0);
 		const categoryStats = { work: 0, social: 0, entertainment: 0, shopping: 0, news: 0, other: 0 };
 		const pageStats = {};
+		let totalVisits = 0;
 		let todayVisits = 0;
 		const todayStart = new Date().setHours(0, 0, 0, 0);
 
+		// Process each history item with actual visits
 		for (const item of historyItems) {
 			const domain = extractDomain(item.url);
-			const visitCount = item.visitCount || 1;
-			const lastVisit = item.lastVisitTime || now;
+
+			// Get actual visits for this URL
+			let visits;
+			try {
+				visits = await chrome.history.getVisits({ url: item.url });
+				// Filter visits within our time range
+				visits = visits.filter((v) => v.visitTime >= startTime && v.visitTime <= endTime);
+			} catch {
+				visits = [{ visitTime: item.lastVisitTime || now }];
+			}
+
+			const visitCount = visits.length;
+			if (visitCount === 0) continue;
+
+			totalVisits += visitCount;
 
 			// Domain stats
 			if (!domainStats[domain]) {
 				domainStats[domain] = { visits: 0, lastVisit: 0 };
 			}
 			domainStats[domain].visits += visitCount;
-			domainStats[domain].lastVisit = Math.max(domainStats[domain].lastVisit, lastVisit);
+			domainStats[domain].lastVisit = Math.max(domainStats[domain].lastVisit, item.lastVisitTime || 0);
 
 			// Page stats
-			const pageKey = item.url.substring(0, 100);
+			const pageKey = item.url.substring(0, 150);
 			if (!pageStats[pageKey]) {
 				pageStats[pageKey] = { url: item.url, title: item.title || item.url, visits: 0 };
 			}
@@ -169,16 +197,16 @@ async function fetchHistoryData(days = 30) {
 			const category = categorize(domain);
 			categoryStats[category] += visitCount;
 
-			// Hourly activity
-			const visitDate = new Date(lastVisit);
-			hourlyActivity[visitDate.getHours()] += visitCount;
+			// Process each individual visit for time-based stats
+			for (const visit of visits) {
+				const visitDate = new Date(visit.visitTime);
+				hourlyActivity[visitDate.getHours()]++;
+				dailyActivity[visitDate.getDay()]++;
 
-			// Daily activity
-			dailyActivity[visitDate.getDay()] += visitCount;
-
-			// Today's visits
-			if (lastVisit >= todayStart) {
-				todayVisits += visitCount;
+				// Today's visits
+				if (visit.visitTime >= todayStart) {
+					todayVisits++;
+				}
 			}
 		}
 
@@ -199,13 +227,22 @@ async function fetchHistoryData(days = 30) {
 			dailyActivity,
 			categoryStats,
 			todayVisits,
+			totalVisits,
 			totalItems: historyItems.length,
 			fetchedAt: now,
+			dateRange: {
+				start: startTime,
+				end: endTime,
+				days: days,
+			},
 		};
 
-		// Update cache
-		cachedData = result;
-		cacheTimestamp = now;
+		// Update cache (only for non-custom ranges)
+		if (!startTimestamp) {
+			cachedData = result;
+			cacheTimestamp = now;
+			cachedDays = days;
+		}
 
 		return result;
 	} catch (error) {
@@ -220,16 +257,23 @@ async function fetchHistoryData(days = 30) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (message.type === 'GET_ANALYTICS') {
 		const days = message.days || 30;
-		fetchHistoryData(days).then((data) => {
+		const startTimestamp = message.startTimestamp || null;
+		const endTimestamp = message.endTimestamp || null;
+
+		fetchHistoryData(days, startTimestamp, endTimestamp).then((data) => {
 			sendResponse(data);
 		});
-		return true; // Async response
+		return true;
 	}
 
 	if (message.type === 'GET_TODAY_STATS') {
-		fetchHistoryData(1).then((data) => {
+		// Fetch only today's data for accurate stats
+		const todayStart = new Date().setHours(0, 0, 0, 0);
+		const now = Date.now();
+
+		fetchHistoryData(1, todayStart, now).then((data) => {
 			sendResponse({
-				todayVisits: data?.todayVisits || 0,
+				todayVisits: data?.totalVisits || 0,
 				topDomains: data?.topDomains?.slice(0, 3) || [],
 				hourlyActivity: data?.hourlyActivity || [],
 			});
@@ -240,12 +284,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (message.type === 'CLEAR_CACHE') {
 		cachedData = null;
 		cacheTimestamp = 0;
+		cachedDays = 0;
 		sendResponse({ success: true });
 		return true;
 	}
 
 	if (message.type === 'EXPORT_DATA') {
-		fetchHistoryData(message.days || 30).then((data) => {
+		const startTimestamp = message.startTimestamp || null;
+		const endTimestamp = message.endTimestamp || null;
+		fetchHistoryData(message.days || 30, startTimestamp, endTimestamp).then((data) => {
 			sendResponse(data);
 		});
 		return true;

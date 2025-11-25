@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Browsing Analytics</title>
     <link rel="stylesheet" href="dashboard.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
@@ -24,19 +23,36 @@
             </div>
             <div class="header-right">
                 <div class="date-filter">
-                    <label for="date-range">Time Range:</label>
-                    <select id="date-range">
-                        <option value="7">Last 7 days</option>
-                        <option value="14">Last 14 days</option>
-                        <option value="30" selected>Last 30 days</option>
-                        <option value="90">Last 90 days</option>
-                    </select>
+                    <label>Time Range:</label>
+                    <!-- Custom Select -->
+                    <div class="custom-select" id="date-range-select">
+                        <div class="custom-select-trigger" id="select-trigger">
+                            <span id="select-value">Last 30 days</span>
+                            <span class="custom-select-arrow">▼</span>
+                        </div>
+                        <div class="custom-select-options" id="select-options">
+                            <div class="custom-select-option" data-value="1">Today</div>
+                            <div class="custom-select-option" data-value="7">Last 7 days</div>
+                            <div class="custom-select-option" data-value="14">Last 14 days</div>
+                            <div class="custom-select-option selected" data-value="30">Last 30 days</div>
+                            <div class="custom-select-option" data-value="90">Last 90 days</div>
+                            <div class="custom-select-option" data-value="180">Last 6 months</div>
+                            <div class="custom-select-option" data-value="365">Last year</div>
+                            <div class="custom-select-option custom-option" data-value="custom">📅 Custom Range...</div>
+                        </div>
+                    </div>
                 </div>
-                <button class="btn-export" id="btn-export">
-                    <span class="icon">💾</span> Export
+                <div class="date-range-picker" id="date-range-picker">
+                    <input type="date" id="date-start" title="Start date">
+                    <span class="date-separator">to</span>
+                    <input type="date" id="date-end" title="End date">
+                    <button class="btn-apply" id="btn-apply-range">Apply</button>
+                </div>
+                <button class="btn-icon" id="btn-export" title="Export data">
+                    <span class="icon">💾</span>
                 </button>
-                <button class="btn-refresh" id="btn-refresh">
-                    <span class="icon">🔄</span> Refresh
+                <button class="btn-icon" id="btn-refresh" title="Refresh">
+                    <span class="icon">🔄</span>
                 </button>
             </div>
         </header>
@@ -152,7 +168,9 @@
         </div>
     </div>
 
-    <script type="module" src="dashboard.js"></script>
+    <!-- Load Chart.js first, then dashboard.js -->
+    <script src="lib/chart.umd.min.js"></script>
+    <script src="dashboard.js"></script>
 </body>
 
 </html>
