@@ -315,7 +315,7 @@ const NEWS_PATH_PATTERNS = [
 	/\/blog\//i,
 	/\/blogs\//i,
 	/\/weblog\//i,
-	
+
 	// News patterns
 	/\/news\//i,
 	/\/news-/i,
@@ -326,7 +326,7 @@ const NEWS_PATH_PATTERNS = [
 	/\/press-release/i,
 	/\/media\//i,
 	/\/newsroom\//i,
-	
+
 	// Article patterns
 	/\/article\//i,
 	/\/articles\//i,
@@ -335,7 +335,7 @@ const NEWS_PATH_PATTERNS = [
 	/\/post\//i,
 	/\/posts\//i,
 	/\/read\//i,
-	
+
 	// Release/Update patterns
 	/\/releases\//i,
 	/\/release\//i,
@@ -344,7 +344,7 @@ const NEWS_PATH_PATTERNS = [
 	/\/update\//i,
 	/\/whats-new/i,
 	/\/announcements?\//i,
-	
+
 	// Editorial patterns
 	/\/editorial\//i,
 	/\/opinion\//i,
@@ -354,35 +354,35 @@ const NEWS_PATH_PATTERNS = [
 	/\/reports?\//i,
 	/\/review\//i,
 	/\/reviews\//i,
-	
+
 	// Publication patterns
 	/\/publication\//i,
 	/\/publications\//i,
 	/\/journal\//i,
 	/\/magazine\//i,
 	/\/digest\//i,
-	
+
 	// Date-based article URLs (common pattern: /2024/01/article-name)
 	/\/\d{4}\/\d{1,2}\/[a-z0-9-]+/i,
-	
+
 	// Content type indicators
 	/\/content\//i,
 	/\/featured\//i,
 	/\/trending\//i,
 	/\/popular\//i,
 	/\/spotlight\//i,
-	
+
 	// Tech/Dev specific
 	/\/devblog\//i,
 	/\/engineering\//i,
 	/\/tech-blog\//i,
 	/\/developer-blog\//i,
-	
+
 	// Company blog patterns
 	/\/company-news\//i,
 	/\/corporate\//i,
 	/\/about\/news/i,
-	
+
 	// Newsletter patterns
 	/\/newsletter\//i,
 	/\/subscribe\//i,
@@ -397,7 +397,7 @@ function isNewsPath(url) {
 	try {
 		const urlObj = new URL(url);
 		const fullPath = urlObj.pathname + urlObj.search;
-		
+
 		for (const pattern of NEWS_PATH_PATTERNS) {
 			if (pattern.test(fullPath)) {
 				return true;
@@ -424,12 +424,12 @@ function categorize(domain, url = '') {
 			}
 		}
 	}
-	
+
 	// Check URL path for news/blog patterns (for sites not in domain list)
 	if (url && isNewsPath(url)) {
 		return 'news';
 	}
-	
+
 	return 'other';
 }
 
@@ -484,7 +484,13 @@ async function fetchHistoryData(days = 30, startTimestamp = null, endTimestamp =
 		const domainStats = {};
 		const hourlyActivity = new Array(24).fill(0);
 		const dailyActivity = new Array(7).fill(0);
-		const categoryStats = { work: 0, social: 0, entertainment: 0, shopping: 0, news: 0, other: 0 };
+		// Initialize ALL categories from CATEGORY_RULES + 'other'
+		const categoryStats = {};
+		for (const category of Object.keys(CATEGORY_RULES)) {
+			categoryStats[category] = 0;
+		}
+		categoryStats.other = 0;
+
 		const pageStats = {};
 		let totalVisits = 0;
 		let todayVisits = 0;
