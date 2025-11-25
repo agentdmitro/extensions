@@ -357,12 +357,14 @@ function renderDomainsChart() {
 		type: 'bar',
 		data: {
 			labels: data.map((d) => d.domain),
-			datasets: [{
-				label: 'Visits',
-				data: data.map((d) => d.visits),
-				backgroundColor: '#6366f1',
-				borderRadius: 6,
-			}],
+			datasets: [
+				{
+					label: 'Visits',
+					data: data.map((d) => d.visits),
+					backgroundColor: '#6366f1',
+					borderRadius: 6,
+				},
+			],
 		},
 		options: {
 			indexAxis: 'y',
@@ -400,17 +402,19 @@ function renderHourlyChart() {
 		type: 'line',
 		data: {
 			labels: labels,
-			datasets: [{
-				label: 'Activity',
-				data: hourlyData,
-				fill: true,
-				backgroundColor: 'rgba(99, 102, 241, 0.1)',
-				borderColor: '#6366f1',
-				borderWidth: 2,
-				tension: 0.4,
-				pointRadius: 3,
-				pointBackgroundColor: '#6366f1',
-			}],
+			datasets: [
+				{
+					label: 'Activity',
+					data: hourlyData,
+					fill: true,
+					backgroundColor: 'rgba(99, 102, 241, 0.1)',
+					borderColor: '#6366f1',
+					borderWidth: 2,
+					tension: 0.4,
+					pointRadius: 3,
+					pointBackgroundColor: '#6366f1',
+				},
+			],
 		},
 		options: {
 			responsive: true,
@@ -429,7 +433,7 @@ function renderHourlyChart() {
 					grid: { color: 'rgba(0,0,0,0.05)' },
 					beginAtZero: true,
 					ticks: {
-						stepSize: maxVal > 100 ? Math.ceil(maxVal / 10) : (maxVal > 10 ? Math.ceil(maxVal / 5) : 1),
+						stepSize: maxVal > 100 ? Math.ceil(maxVal / 10) : maxVal > 10 ? Math.ceil(maxVal / 5) : 1,
 					},
 				},
 			},
@@ -450,12 +454,14 @@ function renderDailyChart() {
 		type: 'bar',
 		data: {
 			labels: labels,
-			datasets: [{
-				label: 'Activity',
-				data: reorderedData,
-				backgroundColor: labels.map((_, i) => (i < 5 ? '#6366f1' : '#a855f7')),
-				borderRadius: 8,
-			}],
+			datasets: [
+				{
+					label: 'Activity',
+					data: reorderedData,
+					backgroundColor: labels.map((_, i) => (i < 5 ? '#6366f1' : '#a855f7')),
+					borderRadius: 8,
+				},
+			],
 		},
 		options: {
 			responsive: true,
@@ -492,12 +498,14 @@ function renderCategoriesChart() {
 		type: 'doughnut',
 		data: {
 			labels: categories.map(([name]) => name.charAt(0).toUpperCase() + name.slice(1)),
-			datasets: [{
-				data: categories.map(([_, value]) => value),
-				backgroundColor: categories.map(([name]) => getCategoryColor(name)),
-				borderWidth: 0,
-				hoverOffset: 10,
-			}],
+			datasets: [
+				{
+					data: categories.map(([_, value]) => value),
+					backgroundColor: categories.map(([name]) => getCategoryColor(name)),
+					borderWidth: 0,
+					hoverOffset: 10,
+				},
+			],
 		},
 		options: {
 			responsive: true,
@@ -518,13 +526,16 @@ function renderCategoryLegend() {
 	const total = categories.reduce((sum, [_, val]) => sum + val, 0);
 
 	elements.categoryLegend.innerHTML = categories
-		.map(([name, value]) => `
+		.map(
+			([name, value]) => `
 			<div class="legend-item">
 				<span class="legend-color" style="background: ${getCategoryColor(name)}"></span>
 				<span>${getCategoryIcon(name)} ${name.charAt(0).toUpperCase() + name.slice(1)}</span>
 				<span style="margin-left: 4px; opacity: 0.6">${calcPercentage(value, total)}</span>
 			</div>
-		`).join('');
+		`
+		)
+		.join('');
 }
 
 function renderPagesTable(searchQuery = '') {
@@ -540,10 +551,7 @@ function renderPagesTable(searchQuery = '') {
 
 	if (searchQuery && searchQuery.trim()) {
 		const query = searchQuery.toLowerCase().trim();
-		pages = pages.filter((p) => 
-			(p.title || '').toLowerCase().includes(query) || 
-			(p.url || '').toLowerCase().includes(query)
-		);
+		pages = pages.filter((p) => (p.title || '').toLowerCase().includes(query) || (p.url || '').toLowerCase().includes(query));
 	}
 
 	const totalPages = Math.ceil(pages.length / PAGE_SIZE);
@@ -562,14 +570,17 @@ function renderPagesTable(searchQuery = '') {
 	}
 
 	elements.pagesTbody.innerHTML = paginatedPages
-		.map((page, index) => `
+		.map(
+			(page, index) => `
 			<tr>
 				<td>${start + index + 1}</td>
 				<td><span class="page-title" title="${escapeHtml(page.title || 'Untitled')}">${escapeHtml(page.title || 'Untitled')}</span></td>
 				<td><a href="${escapeHtml(page.url)}" target="_blank" class="page-url" title="${escapeHtml(page.url)}">${escapeHtml(truncateUrl(page.url, 50))}</a></td>
 				<td>${formatNumber(page.visits)}</td>
 			</tr>
-		`).join('');
+		`
+		)
+		.join('');
 
 	renderPagination(totalPages, pages.length, searchQuery);
 }
@@ -578,9 +589,7 @@ function renderPagination(totalPages, totalItems, searchQuery = '') {
 	if (!elements.pagination) return;
 
 	if (totalPages <= 1) {
-		elements.pagination.innerHTML = totalItems > 0 
-			? `<span class="pagination-info">${totalItems} item${totalItems !== 1 ? 's' : ''}</span>` 
-			: '';
+		elements.pagination.innerHTML = totalItems > 0 ? `<span class="pagination-info">${totalItems} item${totalItems !== 1 ? 's' : ''}</span>` : '';
 		return;
 	}
 
@@ -676,9 +685,7 @@ function handleExport() {
 	const exportData = {
 		...analyticsData,
 		exportedAt: new Date().toISOString(),
-		customRange: customStartDate && customEndDate
-			? { start: new Date(customStartDate).toISOString(), end: new Date(customEndDate).toISOString() }
-			: null,
+		customRange: customStartDate && customEndDate ? { start: new Date(customStartDate).toISOString(), end: new Date(customEndDate).toISOString() } : null,
 	};
 
 	downloadAsJson(exportData, `browsing-analytics-${new Date().toISOString().split('T')[0]}.json`);

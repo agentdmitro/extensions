@@ -307,11 +307,116 @@ const CATEGORY_RULES = {
 };
 
 /**
- * Categorize a domain
+ * URL path patterns for news/blog/article detection
+ * These patterns match against the full URL path
+ */
+const NEWS_PATH_PATTERNS = [
+	// Blog patterns
+	/\/blog\//i,
+	/\/blogs\//i,
+	/\/weblog\//i,
+	
+	// News patterns
+	/\/news\//i,
+	/\/news-/i,
+	/\/breaking\//i,
+	/\/latest\//i,
+	/\/headlines\//i,
+	/\/press\//i,
+	/\/press-release/i,
+	/\/media\//i,
+	/\/newsroom\//i,
+	
+	// Article patterns
+	/\/article\//i,
+	/\/articles\//i,
+	/\/story\//i,
+	/\/stories\//i,
+	/\/post\//i,
+	/\/posts\//i,
+	/\/read\//i,
+	
+	// Release/Update patterns
+	/\/releases\//i,
+	/\/release\//i,
+	/\/changelog\//i,
+	/\/updates\//i,
+	/\/update\//i,
+	/\/whats-new/i,
+	/\/announcements?\//i,
+	
+	// Editorial patterns
+	/\/editorial\//i,
+	/\/opinion\//i,
+	/\/perspectives?\//i,
+	/\/insights?\//i,
+	/\/analysis\//i,
+	/\/reports?\//i,
+	/\/review\//i,
+	/\/reviews\//i,
+	
+	// Publication patterns
+	/\/publication\//i,
+	/\/publications\//i,
+	/\/journal\//i,
+	/\/magazine\//i,
+	/\/digest\//i,
+	
+	// Date-based article URLs (common pattern: /2024/01/article-name)
+	/\/\d{4}\/\d{1,2}\/[a-z0-9-]+/i,
+	
+	// Content type indicators
+	/\/content\//i,
+	/\/featured\//i,
+	/\/trending\//i,
+	/\/popular\//i,
+	/\/spotlight\//i,
+	
+	// Tech/Dev specific
+	/\/devblog\//i,
+	/\/engineering\//i,
+	/\/tech-blog\//i,
+	/\/developer-blog\//i,
+	
+	// Company blog patterns
+	/\/company-news\//i,
+	/\/corporate\//i,
+	/\/about\/news/i,
+	
+	// Newsletter patterns
+	/\/newsletter\//i,
+	/\/subscribe\//i,
+];
+
+/**
+ * Check if URL path matches news/blog patterns
+ * @param {string} url - Full URL to check
+ * @returns {boolean}
+ */
+function isNewsPath(url) {
+	try {
+		const urlObj = new URL(url);
+		const fullPath = urlObj.pathname + urlObj.search;
+		
+		for (const pattern of NEWS_PATH_PATTERNS) {
+			if (pattern.test(fullPath)) {
+				return true;
+			}
+		}
+		return false;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Categorize a domain (enhanced with path detection)
  * @param {string} domain - Domain to categorize
+ * @param {string} url - Full URL for path-based detection
  * @returns {string} Category name
  */
-function categorize(domain) {
+function categorize(domain, url = '') {
+	// First check domain-based rules
 	for (const [category, patterns] of Object.entries(CATEGORY_RULES)) {
 		for (const pattern of patterns) {
 			if (pattern.test(domain)) {
@@ -319,6 +424,12 @@ function categorize(domain) {
 			}
 		}
 	}
+	
+	// Check URL path for news/blog patterns (for sites not in domain list)
+	if (url && isNewsPath(url)) {
+		return 'news';
+	}
+	
 	return 'other';
 }
 
@@ -412,9 +523,9 @@ async function fetchHistoryData(days = 30, startTimestamp = null, endTimestamp =
 			}
 			pageStats[pageKey].visits += visitCount;
 
-			// Category stats
-			const category = categorize(domain);
-			categoryStats[category] += visitCount;
+			// Category stats - NOW WITH URL PATH DETECTION
+			const category = categorize(domain, item.url);
+			categoryStats[category] = (categoryStats[category] || 0) + visitCount;
 
 			// Process each individual visit for time-based stats
 			for (const visit of visits) {
