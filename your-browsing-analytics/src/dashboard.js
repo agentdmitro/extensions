@@ -12,31 +12,8 @@ let customStartDate = null;
 let customEndDate = null;
 let selectedDays = 30;
 
-// DOM Elements
-const elements = {
-	totalPages: document.getElementById('total-pages'),
-	uniqueDomains: document.getElementById('unique-domains'),
-	peakHour: document.getElementById('peak-hour'),
-	peakDay: document.getElementById('peak-day'),
-	// Custom select elements
-	customSelect: document.getElementById('date-range-select'),
-	selectTrigger: document.getElementById('select-trigger'),
-	selectValue: document.getElementById('select-value'),
-	selectOptions: document.getElementById('select-options'),
-	// Date picker
-	dateRangePicker: document.getElementById('date-range-picker'),
-	dateStart: document.getElementById('date-start'),
-	dateEnd: document.getElementById('date-end'),
-	btnApplyRange: document.getElementById('btn-apply-range'),
-	// Other
-	btnExport: document.getElementById('btn-export'),
-	btnRefresh: document.getElementById('btn-refresh'),
-	loadingOverlay: document.getElementById('loading-overlay'),
-	pagesTbody: document.getElementById('pages-tbody'),
-	pagination: document.getElementById('pagination'),
-	pageSearch: document.getElementById('page-search'),
-	categoryLegend: document.getElementById('category-legend'),
-};
+// DOM Elements - will be initialized after DOM loads
+let elements = {};
 
 // Utility functions
 function formatNumber(num) {
@@ -46,10 +23,7 @@ function formatNumber(num) {
 }
 
 function getHourLabel(hour) {
-	if (hour === 0) return '12am';
-	if (hour === 12) return '12pm';
-	if (hour < 12) return `${hour}am`;
-	return `${hour - 12}pm`;
+	return `${hour.toString().padStart(2, '0')}:00`;
 }
 
 function getDayName(index) {
@@ -64,6 +38,10 @@ function getCategoryColor(category) {
 		entertainment: '#f59e0b',
 		shopping: '#10b981',
 		news: '#3b82f6',
+		search: '#8b5cf6',
+		finance: '#14b8a6',
+		education: '#f97316',
+		ai: '#06b6d4',
 		other: '#6b7280',
 	};
 	return colors[category] || colors.other;
@@ -76,6 +54,10 @@ function getCategoryIcon(category) {
 		entertainment: '🎬',
 		shopping: '🛒',
 		news: '📰',
+		search: '🔍',
+		finance: '💰',
+		education: '📚',
+		ai: '🤖',
 		other: '🌐',
 	};
 	return icons[category] || icons.other;
@@ -103,14 +85,6 @@ function escapeHtml(text) {
 	const div = document.createElement('div');
 	div.textContent = text;
 	return div.innerHTML;
-}
-
-function debounce(fn, delay) {
-	let timeout;
-	return (...args) => {
-		clearTimeout(timeout);
-		timeout = setTimeout(() => fn(...args), delay);
-	};
 }
 
 // API functions
@@ -146,22 +120,42 @@ function downloadAsJson(data, filename = 'browsing-analytics.json') {
 
 // Initialize dashboard
 async function init() {
+	// Initialize DOM elements
+	elements = {
+		totalPages: document.getElementById('total-pages'),
+		uniqueDomains: document.getElementById('unique-domains'),
+		peakHour: document.getElementById('peak-hour'),
+		peakDay: document.getElementById('peak-day'),
+		customSelect: document.getElementById('date-range-select'),
+		selectTrigger: document.getElementById('select-trigger'),
+		selectValue: document.getElementById('select-value'),
+		selectOptions: document.getElementById('select-options'),
+		dateRangePicker: document.getElementById('date-range-picker'),
+		dateStart: document.getElementById('date-start'),
+		dateEnd: document.getElementById('date-end'),
+		btnApplyRange: document.getElementById('btn-apply-range'),
+		btnExport: document.getElementById('btn-export'),
+		btnRefresh: document.getElementById('btn-refresh'),
+		loadingOverlay: document.getElementById('loading-overlay'),
+		pagesTbody: document.getElementById('pages-tbody'),
+		pagination: document.getElementById('pagination'),
+		pageSearch: document.getElementById('page-search'),
+		categoryLegend: document.getElementById('category-legend'),
+	};
+
 	setupCustomSelect();
 	setupEventListeners();
 	await loadAnalytics();
 }
 
-/**
- * Setup custom select functionality
- */
 function setupCustomSelect() {
-	// Toggle dropdown
-	elements.selectTrigger?.addEventListener('click', (e) => {
+	if (!elements.selectTrigger) return;
+
+	elements.selectTrigger.addEventListener('click', (e) => {
 		e.stopPropagation();
 		elements.customSelect?.classList.toggle('open');
 	});
 
-	// Handle option selection
 	elements.selectOptions?.addEventListener('click', (e) => {
 		const option = e.target.closest('.custom-select-option');
 		if (!option) return;
@@ -169,23 +163,19 @@ function setupCustomSelect() {
 		const value = option.dataset.value;
 		const text = option.textContent.trim();
 
-		// Update selected state
 		elements.selectOptions.querySelectorAll('.custom-select-option').forEach((opt) => {
 			opt.classList.remove('selected');
 		});
 		option.classList.add('selected');
 
-		// Close dropdown
 		elements.customSelect?.classList.remove('open');
 
 		if (value === 'custom') {
-			// Show date picker
 			elements.dateRangePicker?.classList.add('visible');
-			elements.selectValue.textContent = 'Custom Range';
+			if (elements.selectValue) elements.selectValue.textContent = 'Custom Range';
 		} else {
-			// Hide date picker and load data
 			elements.dateRangePicker?.classList.remove('visible');
-			elements.selectValue.textContent = text;
+			if (elements.selectValue) elements.selectValue.textContent = text;
 			customStartDate = null;
 			customEndDate = null;
 			selectedDays = parseInt(value);
@@ -193,37 +183,29 @@ function setupCustomSelect() {
 		}
 	});
 
-	// Close dropdown when clicking outside
 	document.addEventListener('click', (e) => {
 		if (!e.target.closest('.custom-select')) {
 			elements.customSelect?.classList.remove('open');
 		}
 	});
 
-	// Set default dates for custom picker
 	const today = new Date();
 	const thirtyDaysAgo = new Date();
 	thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-	if (elements.dateEnd) {
-		elements.dateEnd.valueAsDate = today;
-	}
-	if (elements.dateStart) {
-		elements.dateStart.valueAsDate = thirtyDaysAgo;
-	}
+	if (elements.dateEnd) elements.dateEnd.valueAsDate = today;
+	if (elements.dateStart) elements.dateStart.valueAsDate = thirtyDaysAgo;
 }
 
 function setupEventListeners() {
 	elements.btnApplyRange?.addEventListener('click', handleApplyCustomRange);
 	elements.btnExport?.addEventListener('click', handleExport);
 	elements.btnRefresh?.addEventListener('click', () => {
-		// Clear cache and reload
 		chrome.runtime.sendMessage({ type: 'CLEAR_CACHE' }, () => {
 			loadAnalytics();
 		});
 	});
 
-	// Fix search - use direct handler with debounce
 	if (elements.pageSearch) {
 		let searchTimeout;
 		elements.pageSearch.addEventListener('input', (e) => {
@@ -236,9 +218,6 @@ function setupEventListeners() {
 	}
 }
 
-/**
- * Handle apply custom date range
- */
 function handleApplyCustomRange() {
 	const startDate = elements.dateStart?.value;
 	const endDate = elements.dateEnd?.value;
@@ -260,10 +239,9 @@ function handleApplyCustomRange() {
 	customStartDate = start.getTime();
 	customEndDate = end.getTime();
 
-	// Update select display
 	const startStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 	const endStr = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-	elements.selectValue.textContent = `${startStr} - ${endStr}`;
+	if (elements.selectValue) elements.selectValue.textContent = `${startStr} - ${endStr}`;
 
 	loadAnalytics();
 }
@@ -295,7 +273,6 @@ async function loadAnalytics() {
 			throw new Error('No data received');
 		}
 
-		// Update all UI elements
 		updateStats();
 		renderCharts();
 		renderPagesTable();
@@ -318,52 +295,37 @@ function showError() {
 function updateStats() {
 	if (!analyticsData) return;
 
-	// Calculate total visits
 	const totalVisits = analyticsData.totalVisits || analyticsData.topDomains?.reduce((sum, d) => sum + d.visits, 0) || 0;
 
-	// Update DOM elements with animation
 	animateValue(elements.totalPages, totalVisits);
 	animateValue(elements.uniqueDomains, analyticsData.topDomains?.length || 0);
 
-	// Peak hour
 	if (analyticsData.hourlyActivity) {
 		const maxActivity = Math.max(...analyticsData.hourlyActivity);
 		if (maxActivity > 0) {
 			const peakHourIndex = analyticsData.hourlyActivity.indexOf(maxActivity);
-			if (elements.peakHour) {
-				elements.peakHour.textContent = getHourLabel(peakHourIndex);
-			}
+			if (elements.peakHour) elements.peakHour.textContent = getHourLabel(peakHourIndex);
 		} else {
 			if (elements.peakHour) elements.peakHour.textContent = '--';
 		}
 	}
 
-	// Peak day
 	if (analyticsData.dailyActivity) {
 		const maxActivity = Math.max(...analyticsData.dailyActivity);
 		if (maxActivity > 0) {
 			const peakDayIndex = analyticsData.dailyActivity.indexOf(maxActivity);
-			if (elements.peakDay) {
-				elements.peakDay.textContent = getDayName(peakDayIndex);
-			}
+			if (elements.peakDay) elements.peakDay.textContent = getDayName(peakDayIndex);
 		} else {
 			if (elements.peakDay) elements.peakDay.textContent = '--';
 		}
 	}
 }
 
-/**
- * Animate number value
- */
 function animateValue(element, targetValue) {
 	if (!element) return;
-
 	const formattedValue = formatNumber(targetValue);
-
-	// Simple fade animation
 	element.style.opacity = '0';
 	element.style.transform = 'translateY(-5px)';
-
 	setTimeout(() => {
 		element.textContent = formattedValue;
 		element.style.opacity = '1';
@@ -373,7 +335,7 @@ function animateValue(element, targetValue) {
 
 function renderCharts() {
 	if (typeof Chart === 'undefined') {
-		console.error('Chart.js not loaded');
+		console.error('Chart.js not loaded - please ensure chart.umd.min.js is in src/lib/');
 		return;
 	}
 
@@ -395,14 +357,12 @@ function renderDomainsChart() {
 		type: 'bar',
 		data: {
 			labels: data.map((d) => d.domain),
-			datasets: [
-				{
-					label: 'Visits',
-					data: data.map((d) => d.visits),
-					backgroundColor: '#6366f1',
-					borderRadius: 6,
-				},
-			],
+			datasets: [{
+				label: 'Visits',
+				data: data.map((d) => d.visits),
+				backgroundColor: '#6366f1',
+				borderRadius: 6,
+			}],
 		},
 		options: {
 			indexAxis: 'y',
@@ -423,31 +383,55 @@ function renderHourlyChart() {
 
 	if (charts.hourly) charts.hourly.destroy();
 
+	const currentHour = new Date().getHours();
+	const isToday = selectedDays === 1 && !customStartDate;
+
+	let hourlyData = [...analyticsData.hourlyActivity];
+	let labels = Array.from({ length: 24 }, (_, i) => getHourLabel(i));
+
+	if (isToday) {
+		hourlyData = hourlyData.slice(0, currentHour + 1);
+		labels = labels.slice(0, currentHour + 1);
+	}
+
+	const maxVal = Math.max(...hourlyData, 1);
+
 	charts.hourly = new Chart(ctx, {
 		type: 'line',
 		data: {
-			labels: Array.from({ length: 24 }, (_, i) => getHourLabel(i)),
-			datasets: [
-				{
-					label: 'Activity',
-					data: analyticsData.hourlyActivity,
-					fill: true,
-					backgroundColor: 'rgba(99, 102, 241, 0.1)',
-					borderColor: '#6366f1',
-					borderWidth: 2,
-					tension: 0.4,
-					pointRadius: 3,
-					pointBackgroundColor: '#6366f1',
-				},
-			],
+			labels: labels,
+			datasets: [{
+				label: 'Activity',
+				data: hourlyData,
+				fill: true,
+				backgroundColor: 'rgba(99, 102, 241, 0.1)',
+				borderColor: '#6366f1',
+				borderWidth: 2,
+				tension: 0.4,
+				pointRadius: 3,
+				pointBackgroundColor: '#6366f1',
+			}],
 		},
 		options: {
 			responsive: true,
 			maintainAspectRatio: false,
-			plugins: { legend: { display: false } },
+			plugins: {
+				legend: { display: false },
+				tooltip: {
+					callbacks: {
+						label: (context) => `${context.parsed.y} visits`,
+					},
+				},
+			},
 			scales: {
 				x: { grid: { display: false }, ticks: { maxRotation: 45 } },
-				y: { grid: { color: 'rgba(0,0,0,0.05)' }, beginAtZero: true },
+				y: {
+					grid: { color: 'rgba(0,0,0,0.05)' },
+					beginAtZero: true,
+					ticks: {
+						stepSize: maxVal > 100 ? Math.ceil(maxVal / 10) : (maxVal > 10 ? Math.ceil(maxVal / 5) : 1),
+					},
+				},
 			},
 		},
 	});
@@ -466,19 +450,24 @@ function renderDailyChart() {
 		type: 'bar',
 		data: {
 			labels: labels,
-			datasets: [
-				{
-					label: 'Activity',
-					data: reorderedData,
-					backgroundColor: labels.map((_, i) => (i < 5 ? '#6366f1' : '#a855f7')),
-					borderRadius: 8,
-				},
-			],
+			datasets: [{
+				label: 'Activity',
+				data: reorderedData,
+				backgroundColor: labels.map((_, i) => (i < 5 ? '#6366f1' : '#a855f7')),
+				borderRadius: 8,
+			}],
 		},
 		options: {
 			responsive: true,
 			maintainAspectRatio: false,
-			plugins: { legend: { display: false } },
+			plugins: {
+				legend: { display: false },
+				tooltip: {
+					callbacks: {
+						label: (context) => `${context.parsed.y} visits`,
+					},
+				},
+			},
 			scales: {
 				x: { grid: { display: false } },
 				y: { grid: { color: 'rgba(0,0,0,0.05)' }, beginAtZero: true },
@@ -497,18 +486,18 @@ function renderCategoriesChart() {
 		.filter(([_, value]) => value > 0)
 		.sort((a, b) => b[1] - a[1]);
 
+	if (categories.length === 0) return;
+
 	charts.categories = new Chart(ctx, {
 		type: 'doughnut',
 		data: {
 			labels: categories.map(([name]) => name.charAt(0).toUpperCase() + name.slice(1)),
-			datasets: [
-				{
-					data: categories.map(([_, value]) => value),
-					backgroundColor: categories.map(([name]) => getCategoryColor(name)),
-					borderWidth: 0,
-					hoverOffset: 10,
-				},
-			],
+			datasets: [{
+				data: categories.map(([_, value]) => value),
+				backgroundColor: categories.map(([name]) => getCategoryColor(name)),
+				borderWidth: 0,
+				hoverOffset: 10,
+			}],
 		},
 		options: {
 			responsive: true,
@@ -529,16 +518,13 @@ function renderCategoryLegend() {
 	const total = categories.reduce((sum, [_, val]) => sum + val, 0);
 
 	elements.categoryLegend.innerHTML = categories
-		.map(
-			([name, value]) => `
-		<div class="legend-item">
-			<span class="legend-color" style="background: ${getCategoryColor(name)}"></span>
-			<span>${getCategoryIcon(name)} ${name.charAt(0).toUpperCase() + name.slice(1)}</span>
-			<span style="margin-left: 4px; opacity: 0.6">${calcPercentage(value, total)}</span>
-		</div>
-	`
-		)
-		.join('');
+		.map(([name, value]) => `
+			<div class="legend-item">
+				<span class="legend-color" style="background: ${getCategoryColor(name)}"></span>
+				<span>${getCategoryIcon(name)} ${name.charAt(0).toUpperCase() + name.slice(1)}</span>
+				<span style="margin-left: 4px; opacity: 0.6">${calcPercentage(value, total)}</span>
+			</div>
+		`).join('');
 }
 
 function renderPagesTable(searchQuery = '') {
@@ -552,62 +538,65 @@ function renderPagesTable(searchQuery = '') {
 
 	let pages = [...analyticsData.topPages];
 
-	// Apply search filter
 	if (searchQuery && searchQuery.trim()) {
 		const query = searchQuery.toLowerCase().trim();
-		pages = pages.filter((p) => (p.title || '').toLowerCase().includes(query) || (p.url || '').toLowerCase().includes(query));
+		pages = pages.filter((p) => 
+			(p.title || '').toLowerCase().includes(query) || 
+			(p.url || '').toLowerCase().includes(query)
+		);
 	}
 
-	// Calculate pagination
 	const totalPages = Math.ceil(pages.length / PAGE_SIZE);
 
-	// Reset to page 1 if current page is out of bounds
-	if (currentPage > totalPages) {
+	if (currentPage > totalPages && totalPages > 0) {
 		currentPage = 1;
 	}
 
 	const start = (currentPage - 1) * PAGE_SIZE;
 	const paginatedPages = pages.slice(start, start + PAGE_SIZE);
 
-	// Show message if no results
 	if (paginatedPages.length === 0) {
 		elements.pagesTbody.innerHTML = `<tr><td colspan="4" class="loading">No pages match "${escapeHtml(searchQuery)}"</td></tr>`;
 		if (elements.pagination) elements.pagination.innerHTML = '';
 		return;
 	}
 
-	// Render table rows
 	elements.pagesTbody.innerHTML = paginatedPages
-		.map(
-			(page, index) => `
-		<tr>
-			<td>${start + index + 1}</td>
-			<td><span class="page-title" title="${escapeHtml(page.title || 'Untitled')}">${escapeHtml(page.title || 'Untitled')}</span></td>
-			<td><a href="${escapeHtml(page.url)}" target="_blank" class="page-url" title="${escapeHtml(page.url)}">${escapeHtml(truncateUrl(page.url, 50))}</a></td>
-			<td>${formatNumber(page.visits)}</td>
-		</tr>
-	`
-		)
-		.join('');
+		.map((page, index) => `
+			<tr>
+				<td>${start + index + 1}</td>
+				<td><span class="page-title" title="${escapeHtml(page.title || 'Untitled')}">${escapeHtml(page.title || 'Untitled')}</span></td>
+				<td><a href="${escapeHtml(page.url)}" target="_blank" class="page-url" title="${escapeHtml(page.url)}">${escapeHtml(truncateUrl(page.url, 50))}</a></td>
+				<td>${formatNumber(page.visits)}</td>
+			</tr>
+		`).join('');
 
-	// Render pagination
-	renderPagination(totalPages, pages.length);
+	renderPagination(totalPages, pages.length, searchQuery);
 }
 
-function renderPagination(totalPages, totalItems) {
+function renderPagination(totalPages, totalItems, searchQuery = '') {
 	if (!elements.pagination) return;
 
 	if (totalPages <= 1) {
-		elements.pagination.innerHTML = totalItems > 0 ? `<span class="pagination-info">${totalItems} item${totalItems !== 1 ? 's' : ''}</span>` : '';
+		elements.pagination.innerHTML = totalItems > 0 
+			? `<span class="pagination-info">${totalItems} item${totalItems !== 1 ? 's' : ''}</span>` 
+			: '';
 		return;
 	}
 
-	let html = '';
+	// Create pagination container
+	const container = document.createElement('div');
+	container.className = 'pagination-buttons';
 
 	// Previous button
-	html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">← Prev</button>`;
+	const prevBtn = document.createElement('button');
+	prevBtn.className = 'page-btn';
+	prevBtn.textContent = '← Prev';
+	prevBtn.disabled = currentPage === 1;
+	prevBtn.addEventListener('click', () => goToPage(currentPage - 1, searchQuery));
+	container.appendChild(prevBtn);
 
-	// Page numbers with ellipsis for many pages
+	// Page numbers
 	const maxVisible = 5;
 	let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
 	let endPage = Math.min(totalPages, startPage + maxVisible - 1);
@@ -617,44 +606,65 @@ function renderPagination(totalPages, totalItems) {
 	}
 
 	if (startPage > 1) {
-		html += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
+		const firstBtn = document.createElement('button');
+		firstBtn.className = 'page-btn';
+		firstBtn.textContent = '1';
+		firstBtn.addEventListener('click', () => goToPage(1, searchQuery));
+		container.appendChild(firstBtn);
+
 		if (startPage > 2) {
-			html += `<span class="page-ellipsis">...</span>`;
+			const ellipsis = document.createElement('span');
+			ellipsis.className = 'page-ellipsis';
+			ellipsis.textContent = '...';
+			container.appendChild(ellipsis);
 		}
 	}
 
 	for (let i = startPage; i <= endPage; i++) {
-		html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+		const pageBtn = document.createElement('button');
+		pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+		pageBtn.textContent = i.toString();
+		pageBtn.addEventListener('click', () => goToPage(i, searchQuery));
+		container.appendChild(pageBtn);
 	}
 
 	if (endPage < totalPages) {
 		if (endPage < totalPages - 1) {
-			html += `<span class="page-ellipsis">...</span>`;
+			const ellipsis = document.createElement('span');
+			ellipsis.className = 'page-ellipsis';
+			ellipsis.textContent = '...';
+			container.appendChild(ellipsis);
 		}
-		html += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+
+		const lastBtn = document.createElement('button');
+		lastBtn.className = 'page-btn';
+		lastBtn.textContent = totalPages.toString();
+		lastBtn.addEventListener('click', () => goToPage(totalPages, searchQuery));
+		container.appendChild(lastBtn);
 	}
 
 	// Next button
-	html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">Next →</button>`;
+	const nextBtn = document.createElement('button');
+	nextBtn.className = 'page-btn';
+	nextBtn.textContent = 'Next →';
+	nextBtn.disabled = currentPage === totalPages;
+	nextBtn.addEventListener('click', () => goToPage(currentPage + 1, searchQuery));
+	container.appendChild(nextBtn);
 
 	// Info
-	html += `<span class="pagination-info">${totalItems} items</span>`;
+	const info = document.createElement('span');
+	info.className = 'pagination-info';
+	info.textContent = `${totalItems} items`;
+	container.appendChild(info);
 
-	elements.pagination.innerHTML = html;
+	elements.pagination.innerHTML = '';
+	elements.pagination.appendChild(container);
 }
 
-function goToPage(page) {
-	const searchQuery = elements.pageSearch?.value || '';
+function goToPage(page, searchQuery = '') {
 	currentPage = page;
-	renderPagesTable(searchQuery);
-
-	// Scroll table into view
+	renderPagesTable(searchQuery || elements.pageSearch?.value || '');
 	document.getElementById('pages-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function handlePageSearch(e) {
-	currentPage = 1;
-	renderPagesTable(e.target.value);
 }
 
 function handleExport() {
@@ -666,28 +676,17 @@ function handleExport() {
 	const exportData = {
 		...analyticsData,
 		exportedAt: new Date().toISOString(),
-		customRange:
-			customStartDate && customEndDate
-				? {
-						start: new Date(customStartDate).toISOString(),
-						end: new Date(customEndDate).toISOString(),
-				  }
-				: null,
+		customRange: customStartDate && customEndDate
+			? { start: new Date(customStartDate).toISOString(), end: new Date(customEndDate).toISOString() }
+			: null,
 	};
 
 	downloadAsJson(exportData, `browsing-analytics-${new Date().toISOString().split('T')[0]}.json`);
 }
 
-// Make goToPage global for onclick handlers
-window.goToPage = goToPage;
-
 // Add transition style for stat values
 const style = document.createElement('style');
-style.textContent = `
-	.stat-value {
-		transition: opacity 0.15s, transform 0.15s;
-	}
-`;
+style.textContent = `.stat-value { transition: opacity 0.15s, transform 0.15s; }`;
 document.head.appendChild(style);
 
 // Initialize when DOM is ready
