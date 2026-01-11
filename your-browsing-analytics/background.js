@@ -362,7 +362,7 @@ const NEWS_PATH_PATTERNS = [
 	/\/magazine\//i,
 	/\/digest\//i,
 
-	// Date-based article URLs (common pattern: /2024/01/article-name)
+	// Date-based article URLs (common pattern: /2026/01/article-name)
 	/\/\d{4}\/\d{1,2}\/[a-z0-9-]+/i,
 
 	// Content type indicators
